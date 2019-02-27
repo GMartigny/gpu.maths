@@ -4,6 +4,20 @@ function closeEnough (v1, v2) {
     return Math.abs(v1 - v2) < 1e-5;
 }
 
+function compareMatrices (m1, m2) {
+    let ok = true;
+    let i = 0;
+    const width = m1[0].length;
+    const n = m1.length * m1[0].length;
+    while (i < n && ok) {
+        const x = Math.floor(i / width);
+        const y = i % width;
+        ok = closeEnough(m1[y][x], m2[y][x]);
+        ++i;
+    }
+    return ok;
+}
+
 const nbItems = 1e5;
 const inputs = [...new Array(nbItems)].map(() => Math.random());
 
@@ -43,6 +57,30 @@ const size = 5e2;
 const m1 = [...new Array(size)].map(() => [...new Array(size)].map(() => Math.random()));
 const m2 = [...new Array(size)].map(() => [...new Array(size)].map(() => Math.random()));
 
+{ /* MATRIX ADD */
+    // The GPU accelerated way
+    console.time("Matrix add");
+    const add1 = matrix.add(m1, m2);
+    console.timeEnd("Matrix add");
+
+    // Naive node solution
+    console.time("Native matrix add");
+    const add2 = [];
+    const height = m1.length;
+    const width = m1[0].length;
+    for (let i = 0; i < height; ++i) {
+        for (let j = 0; j < width; ++j) {
+            if (!add2[i]) add2[i] = [];
+            add2[i][j] = m1[i][j] + m2[i][j];
+        }
+    }
+    console.timeEnd("Native matrix add");
+
+    // Compare results
+    console.assert(compareMatrices(add1, add2), "Matrix addition results aren't similar.");
+    console.log();
+}
+
 { /* MATRIX MULT */
     // The GPU accelerated way
     console.time("Matrix mult");
@@ -68,14 +106,6 @@ const m2 = [...new Array(size)].map(() => [...new Array(size)].map(() => Math.ra
     console.timeEnd("Native matrix mult");
 
     // Compare results
-    let ok = true;
-    let i = 0;
-    while (i < width * height && ok) {
-        const x = Math.floor(i / width);
-        const y = i % width;
-        ok = closeEnough(mult1[y][x], mult2[y][x]);
-        ++i;
-    }
-    console.assert(ok, "Matrix multiplication results aren't similar.");
+    console.assert(compareMatrices(mult1, mult2), "Matrix multiplication results aren't similar.");
     console.log();
 }

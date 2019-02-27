@@ -61,10 +61,39 @@ export const max = (() => {
 
 export const matrix = {
     /**
+     * Add two matrices
+     * @param {Array<Array<Number>>} matrix1 - Two dimension array with size n.m
+     * @param {Array<Array<Number>>} matrix2 - Two dimension array with size n.m
+     * @return {Array<Array<Number>>} Size n.m
+     */
+    add: (() => {
+        // Create "private" kernel
+        const kernel = gpu.createKernel(
+            function (m1, m2) {
+                const a = m1[this.thread.y][this.thread.x];
+                const b = m2[this.thread.y][this.thread.x];
+                return a + b;
+            }
+        );
+
+        return (matrix1, matrix2) => {
+            if (matrix2.length !== matrix1.length || matrix2[0].length !== matrix1[0].length) {
+                throw new RangeError("Both matrix should have the same dimension.");
+            }
+
+            // Dynamically set outputs size
+            const width = matrix1[0].length;
+            const height = matrix1.length;
+            kernel.setOutput([width, height]);
+
+            return kernel(matrix1, matrix2);
+        };
+    })(),
+    /**
      * Multiply two matrices
      * @param {Array<Array<Number>>} matrix1 - Two dimension array with size n.p
      * @param {Array<Array<Number>>} matrix2 - Two dimension array with size p.m
-     * @return {Array<Array<Number>>}
+     * @return {Array<Array<Number>>} Size n.m
      */
     mult: (() => {
         // Create "private" kernel
