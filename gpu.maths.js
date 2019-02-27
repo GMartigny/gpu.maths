@@ -22,6 +22,7 @@ export const sum = (() => {
     return (numbers) => {
         kernel.constants = {};
         kernel.constants.size = numbers.length;
+
         return kernel(numbers)[0];
     };
 })();
@@ -48,6 +49,38 @@ export const max = (() => {
     return (numbers) => {
         kernel.constants = {};
         kernel.constants.size = numbers.length;
+
         return kernel(numbers)[0];
     }
 })();
+
+export const matrix = {
+    /**
+     * Multiply two matrices
+     * @param {Array<Array<Number>>} matrix1
+     * @param {Array<Array<Number>>} matrix2
+     */
+    mult: (() => {
+        const kernel = gpu.createKernel(
+            function (m1, m2) {
+                var sum = 0;
+                for (let i = 0; i < this.constants.size; ++i) {
+                    sum += m1[this.thread.y][i] * m2[i][this.thread.x];
+                }
+                return sum;
+            }
+        );
+
+        return (matrix1, matrix2) => {
+            if (matrix2.length !== matrix1[0].length) {
+                throw new RangeError("Both matrix should have a common size.");
+            }
+
+            kernel.setOutput([matrix1.length, matrix2[0].length]);
+            kernel.constants = {};
+            kernel.constants.size = matrix2.length;
+
+            return kernel(matrix1, matrix2);
+        };
+    })(),
+};
