@@ -60,6 +60,29 @@ export const max = (() => {
 })();
 
 export const matrix = {
+    sumRows: (() => {
+        // Create "private" kernel
+        const kernel = gpu.createKernel(
+            function (matrix) {
+                const sub = matrix[this.thread.x];
+                const n = this.constants.size;
+                let sum = 0;
+                for (let i = 0; i < n; ++i) {
+                    sum += sub[i];
+                }
+                return sum;
+            }
+        );
+
+        return (matrix) => {
+            // Dynamically set constants ¯\_(ツ)_/¯ and output size
+            kernel.constants = {};
+            kernel.constants.size = matrix[0].length;
+            kernel.setOutput([matrix.length]);
+
+            return kernel(matrix);
+        };
+    })(),
     /**
      * Add two matrices
      * @param {Array<Array<Number>>} matrix1 - Two dimension array with size n.m
@@ -113,9 +136,9 @@ export const matrix = {
             }
 
             // Dynamically set constants ¯\_(ツ)_/¯ and outputs size
-            kernel.setOutput([matrix1.length, matrix2[0].length]);
             kernel.constants = {};
             kernel.constants.size = matrix2.length;
+            kernel.setOutput([matrix1.length, matrix2[0].length]);
 
             return kernel(matrix1, matrix2);
         };

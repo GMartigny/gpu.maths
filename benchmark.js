@@ -18,7 +18,7 @@ function compareMatrices (m1, m2) {
     return ok;
 }
 
-const nbItems = 1e5;
+const nbItems = 5e4;
 const inputs = [...new Array(nbItems)].map(() => Math.random());
 
 { /* SUM */
@@ -53,9 +53,29 @@ const inputs = [...new Array(nbItems)].map(() => Math.random());
     console.log();
 }
 
-const size = 5e2;
+const size = 6e2;
 const m1 = [...new Array(size)].map(() => [...new Array(size)].map(() => Math.random()));
 const m2 = [...new Array(size)].map(() => [...new Array(size)].map(() => Math.random()));
+
+{ /* MATRIX SUM ROWS */
+    console.time("Matrix sum rows");
+    const sum1 = matrix.sumRows(m1);
+    console.timeEnd("Matrix sum rows");
+
+    // Naive node solution
+    console.time("Native matrix sum rows");
+    const sum2 = [];
+    const height = m1.length;
+    for (let i = 0; i < height; ++i) {
+        sum2.push(m1[i].reduce((acc, val) => acc + val, 0));
+    }
+    console.timeEnd("Native matrix sum rows");
+
+
+    // Compare results
+    console.assert(compareMatrices(sum1, sum2), "Matrix rows sum results aren't similar.");
+    console.log();
+}
 
 { /* MATRIX ADD */
     // The GPU accelerated way
